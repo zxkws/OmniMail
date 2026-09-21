@@ -1,6 +1,9 @@
 import { applySuperAdminRole, sessionFromUser } from '../auth/session/auth'
 import { sendMessage } from '../messages/send-message'
+import { textToHtml } from '../../app/handlers/mail'
 import { configuredSuperAdminEmail } from '../../app/super-admin'
+import { deliverWithResend } from '../outbound/outbound-http-provider'
+import { outboundProviderForAddress } from '../outbound/outbound-provider-config'
 import type { Env, UserRow } from '../../app/types'
 
 const INTERNAL_OPERATOR_HOST = 'omni-mail.internal'
@@ -63,16 +66,45 @@ export async function handleOperatorNotification(env: Env, request: Request): Pr
   ).bind(user.id).first<{ address: string }>()
   if (!mailbox) return json({ error: 'Operator mailbox is unavailable' }, 503)
 
-  return sendMessage(
-    env,
-    applySuperAdminRole(sessionFromUser(user), operatorEmail),
-    {
-      mailboxAddress: mailbox.address,
-      to: operatorEmail,
-      subject: body.subject.trim(),
-      text: body.text.trim(),
-      idempotencyKey: body.idempotencyKey,
-    },
-    'service:internal',
-  )
+  const subject = body.subject.trim()
+  const text = body.text.trim()
+  if (outboundProviderForAddress(env, mailbox.address)) {
+    return sendMessage(
+      env,
+      applySuperAdminRole(sessionFromUser(user), operatorEmail),
+      {
+        mailboxAddress: mailbox.address,
+        to: operatorEmail,
+        subject,
+        text,
+        idempotencyKey: body.idempotencyKey,
+      },
+      'service:internal',
+    )
+  }
+
+  const legacyApiKey = env.RESEND_API_KEY?.trim()
+  if (!legacyApiKey) return json({ error: 'Operator outbound provider is unavailable' }, 503)
+  try {
+    const providerId = await deliverWithResend(
+      { provider: 'resend', apiKey: legacyApiKey },
+      {
+        from: env.RESEND_FROM?.trim() || mailbox.address,
+        to: [operatorEmail],
+        replyTo: mailbox.address,
+        subject,
+        text,
+        html: textToHtml(text),
+        idempotencyKey: body.idempotencyKey,
+        headers: {},
+        attachments: [],
+      },
+    )
+    return json({ ok: true, providerId })
+  } catch (error) {
+    console.error('internal operator notification delivery failed', {
+      type: error instanceof Error ? error.name : 'unknown',
+    })
+    return json({ error: 'Operator notification delivery failed' }, 502)
+  }
 }

@@ -100,6 +100,8 @@ export interface Env {
   COOKIE_SECURE?: string
   SETUP_TOKEN?: string
   RESEND_DOMAIN_CONFIGS?: string
+  RESEND_API_KEY?: string
+  RESEND_FROM?: string
   RESEND_WEBHOOK_SECRET?: string
   RESEND_WEBHOOK_SECRETS?: string
   SENDFLARE_API_KEY?: string
