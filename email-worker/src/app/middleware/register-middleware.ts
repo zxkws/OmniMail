@@ -26,6 +26,7 @@ const PUBLIC_PATHS = new Set([
   '/api/auth/linux-do',
   '/api/auth/linux-do/callback',
   '/api/webhooks/resend',
+  '/api/internal/operator-notification',
 ])
 
 export function registerMiddleware(app: Hono<AppContext>): void {

@@ -3,6 +3,7 @@ import type { AppContext } from './context'
 import { registerMiddleware } from './middleware/register-middleware'
 import { registerAccountRoutes } from './routes/account-routes'
 import { registerAdminRoutes } from './routes/admin-routes'
+import { registerInternalRoutes } from './routes/internal-routes'
 import { registerMailRoutes } from './routes/mail-routes'
 import { registerPublicRoutes } from './routes/public-routes'
 import { logWorkerError } from '../shared/observability/structured-log'
@@ -12,6 +13,7 @@ const app = new Hono<AppContext>()
 
 registerMiddleware(app)
 registerPublicRoutes(app)
+registerInternalRoutes(app)
 registerAccountRoutes(app)
 registerAdminRoutes(app)
 registerMailRoutes(app)
