@@ -445,8 +445,8 @@ GitHub Actions 中重复配置 Cloudflare API Token。GitHub Actions 只负责�
 #### Float 与 Android 更新的构建过滤
 
 本仓库同时包含 Web/Worker、OmniMail Float 与 Android App。为了避免只修改 Float
-或 Android 代码时仍重新部署网站，请在 Cloudflare Dashboard 的 **Workers & Pages
-→ omni-mail → Settings → Build → Build watch paths** 中设置：
+或 Android 代码时仍重新部署网站，Cloudflare Workers Builds 应保持以下
+**Build watch paths**：
 
 ```text
 Includes:
